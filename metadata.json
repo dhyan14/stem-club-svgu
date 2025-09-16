@@ -1,0 +1,5 @@
+{
+  "name": "STEM Club Quiz Portal",
+  "description": "An online quiz portal for a STEM Club competition featuring three distinct rounds with team-based submissions and Google Sheets integration.",
+  "requestFramePermissions": []
+}

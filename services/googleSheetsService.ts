@@ -1,3 +1,4 @@
+
 import { Round1Answers, Round2Answers } from '../types';
 
 // ============================= IMPORTANT ==============================
@@ -59,7 +60,7 @@ export const submitRound1 = async (teamNumber: string, answers: Round1Answers): 
 
 export const submitRound2 = async (teamNumber: string, answers: Round2Answers): Promise<{ success: true }> => {
   // Format answers with multiple selections into comma-separated strings
-  const formattedAnswers: { [key: number]: string } = {};
+  const formattedAnswers: { [key: string]: string } = {};
   for (const qId in answers) {
     formattedAnswers[qId] = answers[qId].sort().join(',');
   }
@@ -73,14 +74,14 @@ export const submitRound2 = async (teamNumber: string, answers: Round2Answers): 
   return submitData(payload);
 };
 
-
 export const submitRound3Answer = async (teamNumber: string, questionId: number, answer: string): Promise<{ success: true }> => {
   const payload = {
     teamNumber,
     timestamp: getTimestamp(),
     round: 3,
-    questionId: `Q${questionId}`,
-    answer,
+    answers: {
+      [questionId]: answer,
+    },
   };
   return submitData(payload);
 };

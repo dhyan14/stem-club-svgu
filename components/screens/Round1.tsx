@@ -1,103 +1,131 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuiz } from '../../context/QuizContext';
 import { ROUND_1_QUESTIONS } from '../../constants';
 import { Round } from '../../types';
 import { submitRound1 } from '../../services/googleSheetsService';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import Modal from '../ui/Modal';
 import Spinner from '../ui/Spinner';
+import Modal from '../ui/Modal';
 
 const Round1: React.FC = () => {
   const { teamNumber, round1Answers, setRound1Answers, advanceToRound } = useQuiz();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSkipModalOpen, setIsSkipModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  const currentQuestion = ROUND_1_QUESTIONS[currentQuestionIndex];
+  const qId = currentQuestion.id;
+  const selectedAnswer = round1Answers[qId] || '';
 
   const handleAnswerChange = (questionId: number, answer: string) => {
-    setRound1Answers(prev => ({ ...prev, [questionId]: answer }));
+    setRound1Answers(prev => ({
+      ...prev,
+      [questionId]: answer,
+    }));
   };
   
-  const allAnswered = useMemo(() => {
-    return ROUND_1_QUESTIONS.length === Object.keys(round1Answers).length;
-  }, [round1Answers]);
-
-  const handleSubmit = async () => {
-    if (!allAnswered) return;
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true);
-    setError(null);
+    setSubmissionError(null);
     try {
       await submitRound1(teamNumber, round1Answers);
+      setIsModalOpen(false);
       advanceToRound(Round.TWO);
     } catch (err) {
       console.error("Round 1 Submission Error:", err);
-      setError('Failed to submit answers. Please try again.');
+      setSubmissionError("Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
-      setIsModalOpen(false);
     }
+  };
+
+  const navigateNext = () => {
+    if (currentQuestionIndex >= ROUND_1_QUESTIONS.length - 1) return;
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  const handleSkipConfirm = () => {
+    navigateNext();
+    setIsSkipModalOpen(false);
   };
 
   return (
     <Card>
-      <h2 className="text-3xl font-bold text-center mb-6 text-cyan-400">Round 1: Multiple Choice</h2>
-      <div className="space-y-8">
-        {ROUND_1_QUESTIONS.map((q, index) => (
-          <div key={q.id} className="border-b border-gray-700 pb-6">
-            <p className="text-lg font-semibold mb-4 text-gray-200">Question {index + 1}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Object.keys(q.options).map((key) => (
-                <label
-                  key={key}
-                  className={`flex items-center justify-center p-4 rounded-lg cursor-pointer transition-colors duration-200 text-2xl ${
-                    round1Answers[q.id] === key
-                      ? 'bg-cyan-600 border-cyan-400'
-                      : 'bg-gray-700 hover:bg-gray-600 border-gray-600'
-                  } border-2`}
-                >
-                  <input
-                    type="radio"
-                    name={`question-${q.id}`}
-                    value={key}
-                    checked={round1Answers[q.id] === key}
-                    onChange={() => handleAnswerChange(q.id, key)}
-                    className="hidden"
-                  />
-                  <span className="font-bold text-cyan-300">{key}</span>
-                </label>
-              ))}
-            </div>
+      <h2 className="text-3xl font-bold text-center mb-2 text-cyan-400">Round 1: Multiple Choice</h2>
+      <p className="text-center text-gray-400 mb-6">Question {currentQuestionIndex + 1} of {ROUND_1_QUESTIONS.length}</p>
+      
+      <div className={`transition-opacity duration-150 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
+        <div key={qId} className="border-t border-b border-gray-700 py-6">
+          <div className="flex justify-center items-center gap-4 my-8 min-h-[80px]">
+            {Object.keys(currentQuestion.options).map((key) => (
+              <label
+                key={key}
+                className={`flex items-center justify-center w-20 h-20 rounded-lg border-2 text-4xl font-bold transition-colors duration-200 cursor-pointer hover:bg-gray-600 ${
+                  selectedAnswer === key
+                    ? 'bg-cyan-600 border-cyan-400 text-white'
+                    : 'bg-gray-700 border-gray-600 text-cyan-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`question-${qId}`}
+                  value={key}
+                  checked={selectedAnswer === key}
+                  onChange={() => handleAnswerChange(qId, key)}
+                  className="hidden"
+                  aria-label={`Option ${key}`}
+                />
+                {key}
+              </label>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
-      <div className="mt-8 text-center">
-        <Button onClick={() => setIsModalOpen(true)} disabled={!allAnswered || isSubmitting}>
-          Submit Round 1
-        </Button>
-        {!allAnswered && <p className="text-sm text-yellow-400 mt-2">Please answer all questions before submitting.</p>}
-        {error && <p className="text-red-500 mt-4">{error}</p>}
+
+      <div className="mt-8 flex justify-end items-center min-h-[56px] gap-4">
+        {currentQuestionIndex < ROUND_1_QUESTIONS.length - 1 ? (
+          <>
+            <Button onClick={() => setIsSkipModalOpen(true)} variant="secondary" disabled={isAnimating}>
+              Skip
+            </Button>
+            <Button onClick={navigateNext} disabled={isAnimating}>
+              Next
+            </Button>
+          </>
+        ) : (
+            <Button onClick={() => setIsModalOpen(true)} disabled={isAnimating}>
+                Submit Round 1
+            </Button>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Confirm Submission">
-        <p className="text-gray-300 mb-6">Are you sure you want to submit your answers for Round 1? This action cannot be undone.</p>
-        <div className="max-h-60 overflow-y-auto bg-gray-900 p-4 rounded-md mb-6 border border-gray-700">
-            <h3 className="font-bold text-lg mb-2 text-gray-200">Your Answers:</h3>
-            <ul className="list-disc list-inside space-y-1 text-gray-300">
-                {ROUND_1_QUESTIONS.map(q => (
-                    <li key={q.id}>
-                        Q{q.id}: <span className="font-semibold text-cyan-300">{round1Answers[q.id]}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
+        <p className="text-gray-300 mb-6">Are you sure you want to submit your answers for Round 1? You will not be able to change them later.</p>
+        {submissionError && <p className="text-red-500 mb-4">{submissionError}</p>}
         <div className="flex justify-end gap-4">
-          <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="flex items-center gap-2">
-            {isSubmitting && <Spinner size="sm" />}
-            Confirm & Submit
-          </Button>
+            <Button variant="secondary" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button onClick={handleFinalSubmit} disabled={isSubmitting} className="flex items-center gap-2">
+                {isSubmitting ? <Spinner size="sm" /> : 'Confirm & Submit'}
+            </Button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isSkipModalOpen} onClose={() => setIsSkipModalOpen(false)} title="Confirm Skip">
+        <p className="text-gray-300 mb-6">Are you sure you want to skip this question? You will not be able to return to it.</p>
+        <div className="flex justify-end gap-4">
+            <Button variant="secondary" onClick={() => setIsSkipModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSkipConfirm}>
+                Confirm & Skip
+            </Button>
         </div>
       </Modal>
     </Card>

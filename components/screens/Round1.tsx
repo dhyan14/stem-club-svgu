@@ -10,6 +10,21 @@ import Modal from '../ui/Modal';
 
 const Round1: React.FC = () => {
   const { teamNumber, round1Answers, setRound1Answers, advanceToRound } = useQuiz();
+
+  if (ROUND_1_QUESTIONS.length === 0) {
+    return (
+        <Card>
+            <h2 className="text-3xl font-bold text-center mb-2 text-cyan-400">Round 1: Multiple Choice</h2>
+            <p className="text-center text-gray-400 my-8">There are no questions available for this round.</p>
+            <div className="mt-8 flex justify-end">
+                <Button onClick={() => advanceToRound(Round.TWO)}>
+                    Proceed to Round 2
+                </Button>
+            </div>
+        </Card>
+    );
+  }
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);

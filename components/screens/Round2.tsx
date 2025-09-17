@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuiz } from '../../context/QuizContext';
 import { ROUND_2_QUESTIONS } from '../../constants';
@@ -10,21 +11,6 @@ import Modal from '../ui/Modal';
 
 const Round2: React.FC = () => {
   const { teamNumber, round2Answers, setRound2Answers, advanceToRound } = useQuiz();
-
-  if (ROUND_2_QUESTIONS.length === 0) {
-    return (
-        <Card>
-            <h2 className="text-3xl font-bold text-center mb-2 text-cyan-400">Round 2: Multi-Select</h2>
-            <p className="text-center text-gray-400 my-8">There are no questions available for this round.</p>
-            <div className="mt-8 flex justify-end">
-                <Button onClick={() => advanceToRound(Round.THREE)}>
-                    Proceed to Round 3
-                </Button>
-            </div>
-        </Card>
-    );
-  }
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,7 +79,6 @@ const Round2: React.FC = () => {
 
       <div className={`transition-opacity duration-150 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
         <div key={qId} className="border-t border-b border-gray-700 py-6">
-          <p className="mb-4 text-center text-lg text-gray-200 font-medium">{currentQuestion.question}</p>
            <div className="flex justify-center items-center gap-4 my-8 min-h-[80px]">
             {Object.keys(currentQuestion.options).map((key) => (
               <label

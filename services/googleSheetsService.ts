@@ -78,9 +78,8 @@ export const submitRound3Answer = async (teamNumber: string, questionId: number,
     teamNumber,
     timestamp: getTimestamp(),
     round: 3,
-    answers: {
-      [questionId]: answer,
-    },
+    question: questionId,
+    answer: answer,
   };
   return submitData(payload);
 };

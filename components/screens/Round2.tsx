@@ -20,6 +20,7 @@ const Round2: React.FC = () => {
   const currentQuestion = ROUND_2_QUESTIONS[currentQuestionIndex];
   const qId = currentQuestion.id;
   const selectedAnswers = round2Answers[qId] || [];
+  const isLastQuestion = currentQuestionIndex >= ROUND_2_QUESTIONS.length - 1;
 
   const handleAnswerChange = (questionId: number, option: string) => {
     setRound2Answers(prev => {
@@ -47,7 +48,7 @@ const Round2: React.FC = () => {
   };
 
   const navigateNext = () => {
-    if (currentQuestionIndex >= ROUND_2_QUESTIONS.length - 1) return;
+    if (isLastQuestion) return;
     
     setIsAnimating(true);
     setTimeout(() => {
@@ -57,9 +58,18 @@ const Round2: React.FC = () => {
   };
 
   const handleSkipConfirm = () => {
-    navigateNext();
     setIsSkipModalOpen(false);
+    if (isLastQuestion) {
+        setTimeout(() => setIsModalOpen(true), 150);
+    } else {
+        navigateNext();
+    }
   };
+
+  const skipModalText = isLastQuestion
+    ? "Are you sure you want to skip this question? This will proceed to the final submission for this round."
+    : "Are you sure you want to skip this question? You will not be able to return to it.";
+
 
   return (
     <Card>
@@ -68,6 +78,7 @@ const Round2: React.FC = () => {
 
       <div className={`transition-opacity duration-150 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
         <div key={qId} className="border-t border-b border-gray-700 py-6">
+          <p className="mb-4 text-center text-lg text-gray-200 font-medium">{currentQuestion.question}</p>
            <div className="flex justify-center items-center gap-4 my-8 min-h-[80px]">
             {Object.keys(currentQuestion.options).map((key) => (
               <label
@@ -93,19 +104,24 @@ const Round2: React.FC = () => {
       </div>
 
       <div className="mt-8 flex justify-end items-center min-h-[56px] gap-4">
-        {currentQuestionIndex < ROUND_2_QUESTIONS.length - 1 ? (
+        {isLastQuestion ? (
           <>
             <Button onClick={() => setIsSkipModalOpen(true)} variant="secondary" disabled={isAnimating}>
-              Skip
+                Skip
             </Button>
-            <Button onClick={navigateNext} disabled={isAnimating}>
-                Next
-            </Button>
-          </>
-        ) : (
             <Button onClick={() => setIsModalOpen(true)} disabled={isAnimating}>
                 Submit Round 2
             </Button>
+          </>
+        ) : (
+            <>
+              <Button onClick={() => setIsSkipModalOpen(true)} variant="secondary" disabled={isAnimating}>
+                Skip
+              </Button>
+              <Button onClick={navigateNext} disabled={isAnimating || selectedAnswers.length === 0}>
+                  Next
+              </Button>
+            </>
         )}
       </div>
       
@@ -121,7 +137,7 @@ const Round2: React.FC = () => {
       </Modal>
 
       <Modal isOpen={isSkipModalOpen} onClose={() => setIsSkipModalOpen(false)} title="Confirm Skip">
-        <p className="text-gray-300 mb-6">Are you sure you want to skip this question? You will not be able to return to it.</p>
+        <p className="text-gray-300 mb-6">{skipModalText}</p>
         <div className="flex justify-end gap-4">
             <Button variant="secondary" onClick={() => setIsSkipModalOpen(false)}>Cancel</Button>
             <Button onClick={handleSkipConfirm}>

@@ -79,7 +79,7 @@ const Round3: React.FC = () => {
               value={answerData.answer}
               onChange={(e) => handleAnswerChange(qId, e.target.value)}
               readOnly={answerData.submitted}
-              placeholder="Type your answer here..."
+              placeholder={`Type your answer for Question ${qId}...`}
               className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-3 focus:ring-2 focus:ring-cyan-500 focus:outline-none min-h-[120px] disabled:bg-gray-800 disabled:text-gray-400"
               disabled={answerData.submitted}
             />

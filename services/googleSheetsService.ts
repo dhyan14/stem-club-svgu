@@ -78,7 +78,8 @@ export const submitRound3Answer = async (teamNumber: string, questionId: number,
     teamNumber,
     timestamp: getTimestamp(),
     round: 3,
-    question: questionId,
+    // Using a flat structure and a key that literally matches the column header.
+    "Question No.": questionId,
     answer: answer,
   };
   return submitData(payload);
